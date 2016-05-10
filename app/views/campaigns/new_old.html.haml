@@ -1,0 +1,37 @@
+= form_for(@campaign, url: campaigns_path) do |f|
+  
+  - for image in @campaign.campaign.images
+    %div.form
+      = f.fields_for image.image_type, image do |ff|
+        %p
+          = ff.select :image_type, Image.image_types.collect { |name, value| [name, name] }, {} , id: image.image_type
+        %p
+          = ff.label image.image_type.humanize
+          = ff.file_field :file, class: :file
+          = ff.hidden_field :file_cache
+        %p
+          - for attribute in [:crop_x, :crop_y, :width, :height]
+            = ff.number_field attribute, id: attribute
+        %p
+          - ff.submit
+  %p
+    = f.submit
+
+
+#myModal.modal.fade{:role => "dialog", :tabindex => "-1"}
+  .modal-dialog
+    .modal-content
+      .modal-header
+        %button.close{"aria-label" => "Close", "data-dismiss" => "modal", :type => "button"}
+          %span{"aria-hidden" => "true"} &#215;
+        %h4.modal-title Modal title
+      .modal-body
+        %image#image-preview.widthSet.heightSet
+      .modal-footer
+        %button.btn.btn-default{"data-dismiss" => "modal", :type => "button"} Close
+        %button.btn.btn-primary#crop_button{:type => "button"} Crop
+    / /.modal-content
+  / /.modal-dialog
+/ /.modal
+
+-# #display-images

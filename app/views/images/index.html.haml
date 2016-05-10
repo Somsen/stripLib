@@ -1,0 +1,13 @@
+= link_to 'new image', new_image_path
+
+%hr
+
+- if @images.empty?
+  No images to display
+- else
+  - @images.each do |image|
+    %div{style: "border: 1px dotted #ccc"}
+      = image_tag image.file.url
+      = link_to 'Apagar', image_path(image), data: {method: :delete, confirm: "Delete image?"}
+
+

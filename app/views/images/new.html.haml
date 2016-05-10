@@ -1,0 +1,110 @@
+= form_for @image do |f|
+  %p
+    = f.select :image_type, Image.image_types.collect { |name, value| [name, name] }, {} , id: :image_type
+  %p
+    = f.label :file
+    = f.file_field :file, as: :hidden
+    = f.hidden_field :file_cache
+  %p
+    - for attribute in [:crop_x, :crop_y, :width, :height]
+      = f.number_field attribute, id: attribute
+  %p
+    = f.submit
+
+-# set data remote to true
+-# data-remote="true"
+
+#myModal.modal.fade{:role => "dialog", :tabindex => "-1"}
+  .modal-dialog
+    .modal-content
+      .modal-header
+        %button.close{"aria-label" => "Close", "data-dismiss" => "modal", :type => "button"}
+          %span{"aria-hidden" => "true"} &#215;
+        %h4.modal-title Modal title
+      .modal-body
+        %image#image-preview.widthSet.heightSet
+      .modal-footer
+        %button.btn.btn-default{"data-dismiss" => "modal", :type => "button"} Close
+        %button.btn.btn-primary#crop_button{:type => "button"} Crop
+    / /.modal-content
+  / /.modal-dialog
+/ /.modal
+
+
+:javascript
+  $(document).ready(function(){
+
+    var jcrop_api;
+
+    function initJcrop(){
+      
+      $('#image-preview').Jcrop({
+        onChange: changeCoords
+      }, function(){
+          jcrop_api = this;
+          $("#image_type").trigger('change');
+      });
+
+      var image          = $('#image-preview');
+      console.log(image);
+      var original_width = image.prop('naturalWidth');
+      var resized_width  = image.width();
+      var ratio = original_width / resized_width;
+      function changeCoords(coords){
+        $('#crop_x').val(Math.round(coords.x * ratio));
+        $('#crop_y').val(Math.round(coords.y * ratio));
+        $('#width').val(Math.round(coords.w * ratio));
+        $('#height').val(Math.round(coords.h * ratio));
+      }
+    }
+
+    $("#image_file").on('change', function(){
+
+        var input = this;
+        var file = input.files && input.files[0];
+
+        if(jcrop_api != null)
+          jcrop_api.destroy();
+
+        if( file ){
+          var reader = new FileReader();
+        
+          reader.onload = function(e){
+
+            $('#myModal').modal('show');
+            
+            $img_elem = $('#image-preview');
+
+            $img_elem.removeProp('style');
+            $img_elem.prop('src', e.target.result);
+
+            initJcrop();
+          };
+
+          reader.readAsDataURL(file);
+        }
+    });
+
+    $("#image_type").on('change', function(e){
+      var type = $(this).val();
+      var aspect_ratio = 1
+      switch(type){
+        case 'strip':
+          aspect_ratio = 640/246;
+          break;
+        default:
+          aspect_ratio = 1;
+      }
+      console.log(e);
+      //jcrop_api.setOptions({ aspectRatio: aspect_ratio });
+    });
+
+    $("#crop_button").on("click", function(e){
+      
+    });
+    
+    $("#teste").on("click", function(e){
+
+    });
+
+  });

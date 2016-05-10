@@ -1,0 +1,14 @@
+= link_to 'new campaign', new_campaign_path
+
+%hr
+
+- if @campaigns.empty?
+  No Campaigns to display
+- else
+  - @campaigns.each do |campaign|
+    %p
+      Campaign #{campaign.id}
+    - campaign.images.each do |image|
+      %div{style: "border: 1px dotted #ccc"}
+        = image_tag image.file.url
+        = link_to "Apagar #{image.image_type}", image_path(image), data: {method: :delete, confirm: "Delete image?"}

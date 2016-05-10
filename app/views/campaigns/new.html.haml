@@ -1,0 +1,13 @@
+= form_for(@campaign) do |f|
+  - if @campaign.errors.any?
+    %ul
+      - @campaign.errors.full_messages.each do |msg|
+        %li= msg
+  %p
+    = f.label :name
+    = f.text_field :name
+  %p
+    = f.label :stamp_number
+    = f.number_field :stamp_number
+  %p
+    = f.submit

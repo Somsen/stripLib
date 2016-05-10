@@ -32,8 +32,22 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
+# YAY! Good HAML!
+gem 'haml', '~> 4.0.6'
+gem 'haml-rails', '~> 0.8.2'
+
+gem 'carrierwave'
+
+gem 'annotate'
+
+gem 'mini_magick'
+
+gem 'remotipart', '~> 1.2'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
+  gem 'pry'
+  gem 'pry-byebug'
   gem 'byebug'
 
   # Access an IRB console on exception pages or by using <%= console %> in views
