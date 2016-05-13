@@ -1,0 +1,22 @@
+= link_to "Back", campaigns_path
+
+%h1
+  Campaign Details
+%p
+  %strong 
+    Name:
+  = @campaign.name
+%p
+  %strong 
+    Number of stamps:
+  = @campaign.stamp_number
+%p
+  %h3
+    Campaign images:
+  %p
+    = link_to "Change Images", design_strip_campaign_path(@campaign)
+    = render 'preview_images'
+    
+
+
+

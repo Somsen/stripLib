@@ -5,10 +5,32 @@
 - if @campaigns.empty?
   No Campaigns to display
 - else
-  - @campaigns.each do |campaign|
-    %p
-      Campaign #{campaign.id}
-    - campaign.images.each do |image|
-      %div{style: "border: 1px dotted #ccc"}
-        = image_tag image.file.url
-        = link_to "Apagar #{image.image_type}", image_path(image), data: {method: :delete, confirm: "Delete image?"}
+  %table{style: "width: 600px"}
+    %tr
+      %th
+        Name
+      %th
+        Number of Stamps
+      %th{colspan: "3"}
+    - @campaigns.each do |campaign|
+      %tr
+        %td
+          #{campaign.name}
+        %td
+          #{campaign.stamp_number}
+        %td
+          = link_to "Show", campaign_path(campaign)
+        %td
+          = link_to "Edit", edit_campaign_path(campaign)
+        %td
+          = link_to "Delete", campaign_path(campaign), method: :delete, data: { confirm: "Delete campaign?" }
+
+
+
+
+
+    -# - campaign.images.each do |image|
+    -#   %div{style: "border: 1px dotted #ccc"}
+    -#     = image_tag image.file.url
+    -#     = link_to "Apagar #{image.image_type}", image_path(image), data: {method: :delete, confirm: "Delete image?"}
+      }

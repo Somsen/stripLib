@@ -18,6 +18,12 @@ class CampaignsController < ApplicationController
   MIN_NUMBER_STAMPS = 6
   NUMBER_ITERATIONS = 3
 
+
+  def image_upload
+    binding.pry
+  end
+
+
   def index
     @campaigns = Campaign.all
   end
@@ -137,6 +143,8 @@ class CampaignsController < ApplicationController
     [pos_x, pos_y]
 
   end
+
+
 
   private
     def strip_params

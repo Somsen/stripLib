@@ -8,60 +8,29 @@ class Image < ActiveRecord::Base
 
   attr_accessor :crop_x, :crop_y, :width, :height
 
-  before_save :reprocess_image
+  before_save :resize_image
 
   validates :image_type, presence: true
 
-  def cropping?
-    !crop_x.blank? && !crop_y.blank? && !width.blank? && !height.blank?
-  end
-
-  def ratio
-    if file.path.nil?
-      1
-    else
-      image = MiniMagick::Image.open(file.path)
-      image.width / @width
-    end
-  end
-
-  def reprocess_image
-    image = MiniMagick::Image.open(file.path)
-
-    if cropping?
-      image.combine_options do |i|
-        i.crop "#{width}x#{height}+#{crop_x}+#{crop_y}!"
-      end
-    end    
-
-    image.resize type_size
-    image.write(file.path)
-  end
-
-  def crop_image
-    image = MiniMagick::Image.open(file.path)
-
-    if cropping?
-      image.combine_options do |i|
-        i.crop "#{width}x#{height}+#{crop_x}+#{crop_y}!"
-      end
-    end    
-  end
-
-  def type_size
+  def resize_image
     case image_type.to_sym
     when :strip
-      "640x246\!"  # ignore aspect ratio flag '\!'
+      width, height = [640,246]
+      file.resize_to_fill(width, height)
     when :background
-      "640x246"
+      width, height = [640,246]
+      file.resize_to_fill(width, height)
     when :stamp
-      "90x90\!"
+      width, height = [90,90]
+      file.resize_to_fit(width, height)
     when :unstamp
-      "90x90\!"
+      width, height = [90,90]
+      file.resize_to_fit(width, height)
     when :full
-      "640x246"
+      width, height = [640,246]
+      file.resize_to_fill(width, height)
     else
-      "1x1\!"
+      width, height = [1,1]
     end
   end
 

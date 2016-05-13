@@ -1,0 +1,313 @@
+%div.col-md-12
+  = link_to "Back", campaign_path(@campaign)
+
+  %h3
+    Strip Design
+
+  = form_for(@campaign) do |f|
+    %div.col-md-12{style: "margin-bottom: 30px"}
+      .form
+        = f.fields_for @strip do |ff|
+          %p
+            = ff.hidden_field :image_type
+          %p
+            = ff.label @strip.image_type.humanize
+            = ff.file_field :file, class: :file, style: "display: none"
+            = ff.hidden_field :file_cache
+            %br
+            %button.btn.btn-default.upload_image{ :type => "button" } Upload Strip
+          %p
+            - for attribute in [:crop_x, :crop_y, :width, :height]
+              = ff.hidden_field attribute, id: "#{@strip.image_type}_#{attribute}", class: attribute
+
+      .form
+        = f.fields_for @stamp do |ff|
+          %p
+            = ff.hidden_field :image_type
+          %p
+            = ff.label @stamp.image_type.humanize
+            = ff.file_field :file, class: :file, style: "display: none"
+            = ff.hidden_field :file_cache
+            %br
+            %button.btn.btn-default.upload_image{ :type => "button" } Upload Stamp
+          %p
+            - for attribute in [:crop_x, :crop_y, :width, :height]
+              = ff.hidden_field attribute, id: "#{@stamp.image_type}_#{attribute}", class: attribute
+
+      .form
+        = f.fields_for @unstamp do |ff|
+          %p
+            = ff.hidden_field :image_type
+          %p
+            = ff.label @unstamp.image_type.humanize
+            = ff.file_field :file, class: :file, style: "display: none"
+            = ff.hidden_field :file_cache
+            %br
+            %button.btn.btn-default.upload_image{ :type => "button" } Upload Unstamp
+          %p
+            - for attribute in [:crop_x, :crop_y, :width, :height]
+              = ff.hidden_field attribute, id: "#{@unstamp.image_type}_#{attribute}", class: attribute
+      
+    %p
+      = f.submit
+
+
+  #myModal.modal.fade{:role => "dialog", :tabindex => "-1"}
+    .modal-dialog
+      .modal-content
+        .modal-header
+          %button.close{"aria-label" => "Close", "data-dismiss" => "modal", :type => "button"}
+            %span{"aria-hidden" => "true"} &#215;
+          %h4.modal-title Crop Image
+        .modal-body
+          %image#image-preview
+        .modal-footer
+          %button.btn.btn-default#not_crop_button{"data-dismiss" => "modal", :type => "button"} Don't Crop
+          %button.btn.btn-primary#set_image_campaign{:type => "button"} Crop
+      / /.modal-content
+    / /.modal-dialog
+  / /.modal
+
+  = render 'preview_images'
+
+%div.col-md-12
+  %canvas#preview.hidden
+
+
+:javascript
+  $(document).ready(function(){
+    
+    var jcrop_api;
+    var $current_form;
+
+    // on selecting a new file
+    $(".file").on('click', function(){
+      $(this).val("");
+    });
+
+    $(".file").on('change', function(){
+        var input = this;
+        var file = input.files && input.files[0];
+
+        if(jcrop_api != null)
+          jcrop_api.destroy();
+
+        if( file ){
+          var reader     = new FileReader();
+          var input_elem = $(this);
+          var input_type = input_elem.parents(".form").find("#campaign_image_image_type").val();
+          reader.onload = function(e){
+
+            $img_elem = $('#image-preview');
+
+            $img_elem.removeProp('style');
+            $img_elem.prop('src', e.target.result);
+            $img_elem.prop('image-type', input_type);
+            
+            $current_form = input_elem.parents('.form');
+            initJcrop(input_type);
+          };
+
+          $('#myModal').modal('show');
+
+          reader.readAsDataURL(file);
+        }
+
+    });
+
+    function initJcrop(input_type){
+      // initialize Jcrop api
+      $('#image-preview').Jcrop({
+        onChange: changeCoords
+      }, function(){
+          jcrop_api = this;
+          set_aspect_ratio();
+      });
+
+      var image          = $('#image-preview');
+      var original_width = image.prop('naturalWidth');
+      var resized_width  = image.width();
+      var resized_height = image.height();
+      var ratio          = original_width / resized_width;
+      ratio = 1;
+      jcrop_api.setSelect([0, 0, resized_width, resized_height]);
+
+      function changeCoords(coords){
+        // console.log($current_form);
+        $current_form.find('.crop_x').val(Math.round(coords.x * ratio));
+        $current_form.find('.crop_y').val(Math.round(coords.y * ratio));
+        $current_form.find('.width').val(Math.round(coords.w * ratio));
+        $current_form.find('.height').val(Math.round(coords.h * ratio));
+      }
+
+      function set_aspect_ratio(){
+        var aspect_ratio = 1;
+        switch(input_type){
+          case 'strip':
+            aspect_ratio = 640/246;
+            break;
+          default: // stamps aspect ratio is 1
+            aspect_ratio = 1;
+        }
+        jcrop_api.setOptions({ aspectRatio: aspect_ratio });
+      }
+
+    }
+
+    $("#set_image_campaign").on("click", function(e){
+      var type = $("#image-preview").prop('image-type');
+      // console.log(type);
+
+      var x = $("#" + type + "_crop_x").val();
+      var y = $("#" + type + "_crop_y").val();
+      var w = $("#" + type + "_width").val();
+      var h = $("#" + type + "_height").val();
+
+      // console.log(imageObj, x, y, w, h, 0, 0, w, h);
+
+      if (parseInt(w) > 0) {
+        draw_image_canvas(type, x, y, w, h);
+        console.log("Cropping...");
+      }
+      else{
+        $("#not_crop_button").trigger("click");
+      }
+    });
+
+    $("#not_crop_button").on("click", function(e){
+      console.log("NOT Cropping...");
+      var $image = $("#image-preview");
+      var type   = $image.prop('image-type');
+      var width  = $image.width();
+      var height = $image.height();
+
+      draw_image_canvas(type, 0, 0, width, height);
+    });
+
+    function draw_image_canvas(type, x, y, w, h){
+      // Show image preview
+      var imageObj  = $("#image-preview")[0];
+      var canvas    = $("#preview");
+      var context   = canvas[0].getContext("2d");
+      // console.log(canvas);
+      canvas.attr("width", w);
+      canvas.attr("height", h);
+
+      // clear context to be ready to draw again
+      context.clearRect(0,0,canvas.width(),canvas.height())
+
+      if (imageObj == null || x < 0|| y < 0 || w < 0 || h < 0) {
+        alert("error");
+        return false;
+      }
+
+      context.drawImage(imageObj, x, y, w, h, 0, 0, w, h);
+      base64image = canvas[0].toDataURL();
+      
+      send_image(type, base64image);
+    }
+
+    function send_image(type, base64image){
+      $.ajax({
+        type: "POST",
+        url: "#{image_upload_campaign_path(@campaign)}",
+        data: {type: type, image: base64image },
+        success: function(data){ update_preview(data) },
+        error: function(xhr, ajaxOptions, thrownError){ console.log(xhr, ajaxOptions, thrownError); },
+        dataType: "json"
+      });
+
+      $("#myModal").modal("hide");
+    }
+
+    function update_preview(json){
+      console.log(json);
+      for(var key in json){
+        var id  = json[key][key+"_id"];
+        var url = json[key][key+"_url"];
+
+        var image_preview = $("#" + key + "_id img");
+        image_preview.prop('src', url);
+        image_preview.prop('image_id', id);
+
+        var remove_button = image_preview.siblings(".remove-image");
+        remove_button.removeClass("hidden");
+
+      }
+
+      // var id            = type + "-preview";
+      // var image_preview = $("#" + id + " img");
+      // var final_preview = $("#final-preview img");
+
+      // image_preview.prop('src', json.image_url);
+      // image_preview.prop('image_id', json.image_id);
+      
+      // final_preview.prop('src', json.full_strip);
+    }
+
+    $(".remove-image").on("click", function(e){
+      $this = $(this);
+      var type = $this.attr("image_type");
+      var image_preview = $this.siblings("img");
+
+      var delete_url = get_delete_url(type);
+      if(delete_url != null){
+        $.ajax({
+          type: "DELETE",
+          url: delete_url,
+          success: function(data){
+            image_preview.prop("src", get_default_image(type));
+            image_preview.removeProp("image_id");
+            if(data.remove_full == true){
+              var image_full = $("#full_id img");
+              image_full.prop("src", get_default_image("full_strip"));
+              image_full.removeProp("image_id");
+            }
+            $this.addClass("hidden");
+
+            update_preview(data);
+          },
+          error: function(xhr, ajaxOptions, thrownError){ console.log(xhr, ajaxOptions, thrownError); },
+          dataType: "json"
+        });
+      }
+    });
+
+    function get_delete_url(type){
+      var delete_url;
+      switch(type){
+        case 'strip':
+          delete_url = "#{image_strip_campaign_path(@campaign)}";
+          break;
+        case 'stamp':
+          delete_url = "#{image_stamp_campaign_path(@campaign)}";
+          break;
+        case 'unstamp':
+          delete_url = "#{image_unstamp_campaign_path(@campaign)}";
+          break;
+        default:
+          delete_url = null;
+      }
+      return delete_url;
+    }
+
+    function get_default_image(type){
+      var default_url;
+      switch(type){
+        case 'strip':
+          default_url = "http://placehold.it/640x248"
+          break;
+        case 'full_strip':
+          default_url = "http://placehold.it/640x248"
+          break;
+        default:
+          default_url = "http://placehold.it/90x90"
+      }
+      return default_url;
+    }
+
+    $(".upload_image").on("click", function(){
+      $(this).siblings("#campaign_image_file").trigger("click");
+    });
+
+  });

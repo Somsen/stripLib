@@ -1,0 +1,37 @@
+#images-preview.col-md-6{style: "background-color:#AAA;" }
+  %h3
+    Images Preview
+  #strip_id{ style: "margin-left: 20px"}
+    %h4 Strip
+    - if @strip.nil? || @strip.file.url.nil?
+      %button.remove-image.btn.btn-mini.btn-danger.hidden{image_type: "strip"} x
+      %img{src: "http://placehold.it/640x248" }
+    - else
+      %button.remove-image.btn.btn-mini.btn-danger{image_type: "strip"} x
+      %img{src: @strip.file.url }
+  #stamp_id{ style: "margin-left: 20px"}
+    %h4 Stamp
+    - if @stamp.nil? || @stamp.file.url.nil?
+      %button.remove-image.btn.btn-mini.btn-danger.hidden{:image_type => "stamp"} x
+      %img{src: "http://placehold.it/90x90" }
+    - else
+      %button.remove-image.btn.btn-mini.btn-danger{image_type: "stamp"} x
+      %img{src: @stamp.file.url }
+  #unstamp_id{ style: "margin-left: 20px; margin-bottom: 30px"}
+    %h4
+      Unstamp
+    - if @unstamp.nil? || @unstamp.file.url.nil?
+      %button.remove-image.btn.btn-mini.btn-danger.hidden{image_type: "unstamp"} x
+      %img{src: "http://placehold.it/90x90" }
+    - else
+      %button.remove-image.btn.btn-mini.btn-danger{image_type: "unstamp"} x
+      %img{src: @unstamp.file.url }
+#final-strip-preview.col-md-6{style: "background-color:#AAA;" }
+  %h3
+    Final Preview
+  #full_id{ style: "margin-left: 20px; margin-bottom: 30px"}
+    %h4 Final Strip
+    - if @full_strip.nil? || @full_strip.file.url.nil?
+      %img{src: "http://placehold.it/640x248" }
+    - else
+      %img{src: @full_strip.file.url }

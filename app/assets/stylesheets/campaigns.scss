@@ -3,9 +3,11 @@
 // You can use Sass (SCSS) here: http://sass-lang.com/
 
 .widthSet {
-  max-width: 500px;
+  max-width: 1000px;
+  overflow-x: auto;
+  padding: 15px;
 }
 
 .heightSet {
-  max-height: 500px;
+  max-height: 800px;
 }
