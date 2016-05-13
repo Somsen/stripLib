@@ -258,14 +258,18 @@ class CampaignsController < ApplicationController
     end
 
     # load final strip preview
-    final_strip_preview = MiniMagick::Image.open(strip.file.path)
+    MiniMagick::Tool::Convert.new do |convert|
+      convert.merge! ["-size", "640x248", "xc:transparent", "write.png"]
+    end
+
+    transparent_strip = MiniMagick::Image.open("write.png")
 
     # add stamps to final strip preview
     if !stamp.nil?
       stamp_image = MiniMagick::Image.open(stamp.file.path)
       # ADD STAMPS
       for i in 0..number_stamps-1
-        final_strip_preview = composite_image(final_strip_preview, stamp_image, i, total_stamps)
+        transparent_strip = composite_image(transparent_strip, stamp_image, i, total_stamps)
       end
     end
 
@@ -278,9 +282,13 @@ class CampaignsController < ApplicationController
       unstamp_image = MiniMagick::Image.open(unstamp.file.path)
       # ADD UNSTAMPED
       for i in number_stamps..total_stamps-1
-        final_strip_preview = composite_image(final_strip_preview, unstamp_image, i, total_stamps)
+        transparent_strip = composite_image(transparent_strip, unstamp_image, i, total_stamps)
       end
     end
+
+    # put unstamps over stamp
+    final_strip_preview = MiniMagick::Image.open(strip.file.path)
+    final_strip_preview = compose_strip_with_stamps(final_strip_preview, transparent_strip)
 
     # save the generated preview strip
     file          = ActionDispatch::Http::UploadedFile.new({
@@ -306,6 +314,14 @@ class CampaignsController < ApplicationController
     final_strip_image = final_strip_image.composite(stamp_image) do |c|
       c.compose "Over"
       c.geometry "+#{x}+#{y}"
+    end  
+
+    final_strip_image
+  end
+
+  def compose_strip_with_stamps(final_strip_image, stamps_image)
+    final_strip_image = final_strip_image.composite(stamps_image) do |c|
+      c.compose "Over"
     end  
 
     final_strip_image
