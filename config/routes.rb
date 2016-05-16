@@ -19,9 +19,9 @@ Rails.application.routes.draw do
         to: 'campaigns#design_strip_post',
         as: 'design_strip_post'
 
-      post 'set-strip',
-        to: 'campaigns#set_strip',
-        as: 'set_strip'
+      post 'change-stamps',
+        to: 'campaigns#change_stamps',
+        as: 'change_stamps'
     end
   end
 

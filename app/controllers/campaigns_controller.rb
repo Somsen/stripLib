@@ -81,38 +81,6 @@ class CampaignsController < ApplicationController
     
   end
 
-  def set_strip
-    respond_to do |format|
-      @campaign = Campaign.find(params[:id])
-
-      @strip    = @campaign.images.find_by(image_type: Image.image_types.strip)
-      if @strip.nil?
-        #creeate strip image
-        @strip = @campaign.images.new(strip_params)
-        if @strip.save
-          format.json { render json: { url: @strip.file.url } }
-        else
-          format.json { render json: { errors: "Couldn't save strip image!" } }
-        end
-      else
-        #replace current strip image
-        if @strip.update(strip_params)
-          format.json { render json: { url: @strip.file.url } }
-        else
-          format.json { render json: { errors: "Couldn't replace strip image!" } }
-        end
-      end
-    end
-  end
-
-  def set_stamp
-
-  end
-
-  def set_unstamp
-
-  end
-
   def image_upload
     @campaign = Campaign.find(params[:id])
     type     = params[:type]
@@ -157,6 +125,40 @@ class CampaignsController < ApplicationController
     #   image_url: "#{image.file.url}?#{image.updated_at.to_i}",
     #   full_strip: "#{@campaign.images.full.first.file.url}?#{@campaign.images.full.first.updated_at}"
     # }
+  end
+
+  def change_stamps
+    @campaign = Campaign.find(params[:id])
+    number_stamps = params[:stamps]
+
+    if @campaign.stamp_number != number_stamps
+
+      if @campaign.update(stamp_number: number_stamps)
+      
+        full_strip = @campaign.images.full.first
+
+        if !full_strip.nil?
+          # store_dir = full_strip.file.store_dir
+          # file_path = "public/#{store_dir}/full#{number_stamps}.png"
+          # if File.exists?(file_path)
+          #   cache_file_full_strip = File.open(file_path)
+          #   if store_dir.update(file: cache_file_full_strip)
+          #     return render json: json_response
+          #   else
+          #     # UNABLE TO UPDATE IMAGE
+          #   end
+          # else
+          #   generate_preview_strip(false)
+          #   return render json: json_response
+          # end
+          generate_preview_strip(false)
+          return render json: json_response
+
+        end # end !full_strip.nil?
+      end # end @campaign.update(stamp_number: number_stamps)
+    end # end @campaign.stamp_number != number_stamps
+
+    return render json: { ok: "OK!" }
   end
 
   def destroy_strip
@@ -246,13 +248,12 @@ class CampaignsController < ApplicationController
  
     # generate a default strip if there is no strip
     if strip.nil?
-      if !stamp.nil? || !unstamp.nil?
-        strip = create_default_strip
-      elsif !preview_strip.nil?
+      # if !stamp.nil? || !unstamp.nil?
+      #   strip = create_default_strip
+      # elsif !preview_strip.nil?
+      if stamp.nil? && unstamp.nil? && !preview_strip.nil?
         # destroy preview strip because the is nothing to preview
         preview_strip.destroy
-        return true
-      else
         return true
       end
     end
@@ -275,7 +276,7 @@ class CampaignsController < ApplicationController
 
     # add unstamps to final strip preview
     if unstamp.nil? && !stamp.nil? && !from_delete
-        unstamp = create_unstamp_image(stamp.file.path, 35)
+        unstamp = create_unstamp_image(stamp.file.path, 50)
     end
 
     if !unstamp.nil?
@@ -287,14 +288,17 @@ class CampaignsController < ApplicationController
     end
 
     # put unstamps over stamp
-    final_strip_preview = MiniMagick::Image.open(strip.file.path)
-    final_strip_preview = compose_strip_with_stamps(final_strip_preview, transparent_strip)
-
+    if !strip.nil?
+      final_strip_preview = MiniMagick::Image.open(strip.file.path)
+      final_strip_preview = compose_strip_with_stamps(final_strip_preview, transparent_strip)
+    else
+      final_strip_preview = transparent_strip
+    end
     # save the generated preview strip
     file          = ActionDispatch::Http::UploadedFile.new({
                     tempfile: final_strip_preview,
                     content_type: "image/png",
-                    filename: "full.png"
+                    filename: "full#{total_stamps}.png"
                   })
 
     if preview_strip.nil?

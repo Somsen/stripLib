@@ -8,6 +8,6 @@
     = f.text_field :name
   %p
     = f.label :stamp_number
-    = f.number_field :stamp_number
+    = f.select :stamp_number, [6,8,10,12], selected: 8
   %p
     = f.submit

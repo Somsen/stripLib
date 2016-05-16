@@ -6,7 +6,7 @@
 
   = form_for(@campaign) do |f|
     %div.col-md-12{style: "margin-bottom: 30px"}
-      .form
+      .form.col-md-4
         = f.fields_for @strip do |ff|
           %p
             = ff.hidden_field :image_type
@@ -20,7 +20,7 @@
             - for attribute in [:crop_x, :crop_y, :width, :height]
               = ff.hidden_field attribute, id: "#{@strip.image_type}_#{attribute}", class: attribute
 
-      .form
+      .form.col-md-4
         = f.fields_for @stamp do |ff|
           %p
             = ff.hidden_field :image_type
@@ -34,7 +34,7 @@
             - for attribute in [:crop_x, :crop_y, :width, :height]
               = ff.hidden_field attribute, id: "#{@stamp.image_type}_#{attribute}", class: attribute
 
-      .form
+      .form.col-md-4
         = f.fields_for @unstamp do |ff|
           %p
             = ff.hidden_field :image_type
@@ -47,7 +47,11 @@
           %p
             - for attribute in [:crop_x, :crop_y, :width, :height]
               = ff.hidden_field attribute, id: "#{@unstamp.image_type}_#{attribute}", class: attribute
-      
+    .col-md-12{style: "margin-bottom: 30px"}
+      %p
+        = f.label :stamp_number
+        = f.select :stamp_number, [6,8,10,12], selected: @campaign.stamp_number
+        %button.btn.btn-default.change_stamps{ :type => "button" } Preview
     %p
       = f.submit
 
@@ -60,7 +64,7 @@
             %span{"aria-hidden" => "true"} &#215;
           %h4.modal-title Crop Image
         .modal-body
-          %image#image-preview
+          %image#image-preview{style: 'max-width: 400px'}
         .modal-footer
           %button.btn.btn-default#not_crop_button{"data-dismiss" => "modal", :type => "button"} Don't Crop
           %button.btn.btn-primary#set_image_campaign{:type => "button"} Crop
@@ -118,6 +122,7 @@
     function initJcrop(input_type){
       // initialize Jcrop api
       $('#image-preview').Jcrop({
+        maxSize: [580, 380],
         onChange: changeCoords
       }, function(){
           jcrop_api = this;
@@ -306,8 +311,23 @@
       return default_url;
     }
 
-    $(".upload_image").on("click", function(){
+    $(".upload_image").on("click", function(e){
       $(this).siblings("#campaign_image_file").trigger("click");
+    });
+
+    $(".change_stamps").on("click", function(e){
+      var $this = $(this);
+      var select = $this.siblings("select");
+      var stamps = select.val();
+
+      $.ajax({
+        type: "POST",
+        url: "#{change_stamps_campaign_path(@campaign)}",
+        data: {stamps: stamps},
+        success: function(data){ update_preview(data) },
+        error: function(xhr, ajaxOptions, thrownError){ console.log(xhr, ajaxOptions, thrownError); },
+        dataType: "json"
+      });
     });
 
   });
