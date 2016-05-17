@@ -64,7 +64,8 @@
             %span{"aria-hidden" => "true"} &#215;
           %h4.modal-title Crop Image
         .modal-body
-          %image#image-preview{style: 'max-width: 400px'}
+          %div
+            %image#image-preview
         .modal-footer
           %button.btn.btn-default#not_crop_button{"data-dismiss" => "modal", :type => "button"} Don't Crop
           %button.btn.btn-primary#set_image_campaign{:type => "button"} Crop
@@ -77,114 +78,174 @@
 %div.col-md-12
   %canvas#preview.hidden
 
+:css
+  img {
+    max-width: 100%;
+  }
+
 
 :javascript
   $(document).ready(function(){
     
-    var jcrop_api;
-    var $current_form;
+    // var jcrop_api;
+    // var $current_form;
 
-    // on selecting a new file
+    // // on selecting a new file
+    // $(".file").on('click', function(){
+    //   $(this).val("");
+    // });
+
+    // $(".file").on('change', function(){
+    //     var input = this;
+    //     var file = input.files && input.files[0];
+
+    //     if(jcrop_api != null)
+    //       jcrop_api.destroy();
+
+    //     if( file ){
+    //       var reader     = new FileReader();
+    //       var input_elem = $(this);
+    //       var input_type = input_elem.parents(".form").find("#campaign_image_image_type").val();
+    //       reader.onload = function(e){
+
+    //         $img_elem = $('#image-preview');
+
+    //         $img_elem.removeProp('style');
+    //         $img_elem.prop('src', e.target.result);
+    //         $img_elem.prop('image-type', input_type);
+            
+    //         $current_form = input_elem.parents('.form');
+    //         initJcrop(input_type);
+    //       };
+
+    //       $('#myModal').modal('show');
+
+    //       reader.readAsDataURL(file);
+    //     }
+
+    // });
+
+    // function initJcrop(input_type){
+    //   // initialize Jcrop api
+    //   $('#image-preview').Jcrop({
+    //     maxSize: [580, 380],
+    //     onChange: changeCoords
+    //   }, function(){
+    //       jcrop_api = this;
+    //       set_aspect_ratio();
+    //   });
+
+    //   var image          = $('#image-preview');
+    //   var original_width = image.prop('naturalWidth');
+    //   var resized_width  = image.width();
+    //   var resized_height = image.height();
+    //   var ratio          = original_width / resized_width;
+    //   ratio = 1;
+    //   jcrop_api.setSelect([0, 0, resized_width, resized_height]);
+
+    //   function changeCoords(coords){
+    //     // console.log($current_form);
+    //     $current_form.find('.crop_x').val(Math.round(coords.x * ratio));
+    //     $current_form.find('.crop_y').val(Math.round(coords.y * ratio));
+    //     $current_form.find('.width').val(Math.round(coords.w * ratio));
+    //     $current_form.find('.height').val(Math.round(coords.h * ratio));
+    //   }
+
+    //   function set_aspect_ratio(){
+    //     var aspect_ratio = 1;
+    //     switch(input_type){
+    //       case 'strip':
+    //         aspect_ratio = 640/246;
+    //         break;
+    //       default: // stamps aspect ratio is 1
+    //         aspect_ratio = 1;
+    //     }
+    //     jcrop_api.setOptions({ aspectRatio: aspect_ratio });
+    //   }
+
+    // }
+
+    var $current_form;
+    
+     // on selecting a new file
     $(".file").on('click', function(){
       $(this).val("");
     });
 
     $(".file").on('change', function(){
-        var input = this;
-        var file = input.files && input.files[0];
+      var input = this;
+      var file = input.files && input.files[0];
 
-        if(jcrop_api != null)
-          jcrop_api.destroy();
+      if( file ){
+        var reader     = new FileReader();
+        var input_elem = $(this);
+        var input_type = input_elem.parents(".form").find("#campaign_image_image_type").val();
+        reader.onload = function(e){
 
-        if( file ){
-          var reader     = new FileReader();
-          var input_elem = $(this);
-          var input_type = input_elem.parents(".form").find("#campaign_image_image_type").val();
-          reader.onload = function(e){
+          $img_elem = $('#image-preview');
 
-            $img_elem = $('#image-preview');
+          $img_elem.removeProp('style');
+          $img_elem.prop('src', e.target.result);
+          $img_elem.prop('image-type', input_type);
+          
+          $current_form = input_elem.parents('.form');
+        };
 
-            $img_elem.removeProp('style');
-            $img_elem.prop('src', e.target.result);
-            $img_elem.prop('image-type', input_type);
-            
-            $current_form = input_elem.parents('.form');
-            initJcrop(input_type);
-          };
+        $('#myModal').modal('show');
 
-          $('#myModal').modal('show');
-
-          reader.readAsDataURL(file);
-        }
-
+        reader.readAsDataURL(file);
+      }
     });
 
-    function initJcrop(input_type){
-      // initialize Jcrop api
-      $('#image-preview').Jcrop({
-        maxSize: [580, 380],
-        onChange: changeCoords
-      }, function(){
-          jcrop_api = this;
-          set_aspect_ratio();
-      });
+    var $image = $('#image-preview');
+    var cropBoxData;
+    var canvasData;
 
-      var image          = $('#image-preview');
-      var original_width = image.prop('naturalWidth');
-      var resized_width  = image.width();
-      var resized_height = image.height();
-      var ratio          = original_width / resized_width;
-      ratio = 1;
-      jcrop_api.setSelect([0, 0, resized_width, resized_height]);
+    $('#myModal').on('shown.bs.modal', function () {
+      var aspect_ratio = 1;
+      var type   = $image.prop('image-type');
+      if(type == 'strip')
+        aspect_ratio = 640 / 248
 
-      function changeCoords(coords){
-        // console.log($current_form);
-        $current_form.find('.crop_x').val(Math.round(coords.x * ratio));
-        $current_form.find('.crop_y').val(Math.round(coords.y * ratio));
-        $current_form.find('.width').val(Math.round(coords.w * ratio));
-        $current_form.find('.height').val(Math.round(coords.h * ratio));
-      }
+      $image.cropper({
+        viewMode: 0,
+        aspectRatio: aspect_ratio,
+        built: function () {
+          $image.cropper('setCanvasData', canvasData);
+          $image.cropper('setCropBoxData', cropBoxData);
+        },
 
-      function set_aspect_ratio(){
-        var aspect_ratio = 1;
-        switch(input_type){
-          case 'strip':
-            aspect_ratio = 640/246;
-            break;
-          default: // stamps aspect ratio is 1
-            aspect_ratio = 1;
+        crop: function(e){
+          cropBoxData = $image.cropper('getCropBoxData');
+          canvasData = $image.cropper('getCanvasData');
+          imageData = $image.cropper('getImageData');
+
         }
-        jcrop_api.setOptions({ aspectRatio: aspect_ratio });
-      }
+      });
+    }).on('hidden.bs.modal', function () {
+      $image.cropper('destroy');
+    });
 
-    }
 
     $("#set_image_campaign").on("click", function(e){
-      var type = $("#image-preview").prop('image-type');
-      // console.log(type);
+      cropBoxData = $image.cropper('getCropBoxData');
+      canvasData = $image.cropper('getCanvasData');
+      imageData = $image.cropper('getImageData');
 
-      var x = $("#" + type + "_crop_x").val();
-      var y = $("#" + type + "_crop_y").val();
-      var w = $("#" + type + "_width").val();
-      var h = $("#" + type + "_height").val();
+      $image.cropper('getCroppedCanvas').toBlob(function (blob) {
+        send_blob(blob);
+      });
 
-      // console.log(imageObj, x, y, w, h, 0, 0, w, h);
-
-      if (parseInt(w) > 0) {
-        draw_image_canvas(type, x, y, w, h);
-        console.log("Cropping...");
-      }
-      else{
-        $("#not_crop_button").trigger("click");
-      }
+      $("#myModal").modal("hide");
     });
 
     $("#not_crop_button").on("click", function(e){
-      console.log("NOT Cropping...");
       var $image = $("#image-preview");
       var type   = $image.prop('image-type');
-      var width  = $image.width();
-      var height = $image.height();
+      imageData = $image.cropper('getImageData');
+
+      var width  = imageData.naturalWidth;
+      var height = imageData.naturalHeight;
 
       draw_image_canvas(type, 0, 0, width, height);
     });
@@ -192,14 +253,14 @@
     function draw_image_canvas(type, x, y, w, h){
       // Show image preview
       var imageObj  = $("#image-preview")[0];
-      var canvas    = $("#preview");
-      var context   = canvas[0].getContext("2d");
+      var $canvas    = $("#preview");
+      var context   = $canvas[0].getContext("2d");
       // console.log(canvas);
-      canvas.attr("width", w);
-      canvas.attr("height", h);
+      $canvas.attr("width", w);
+      $canvas.attr("height", h);
 
       // clear context to be ready to draw again
-      context.clearRect(0,0,canvas.width(),canvas.height())
+      context.clearRect(0,0,$canvas.width(),$canvas.height())
 
       if (imageObj == null || x < 0|| y < 0 || w < 0 || h < 0) {
         alert("error");
@@ -207,23 +268,29 @@
       }
 
       context.drawImage(imageObj, x, y, w, h, 0, 0, w, h);
-      base64image = canvas[0].toDataURL();
-      
-      send_image(type, base64image);
-    }
-
-    function send_image(type, base64image){
-      $.ajax({
-        type: "POST",
-        url: "#{image_upload_campaign_path(@campaign)}",
-        data: {type: type, image: base64image },
-        success: function(data){ update_preview(data) },
-        error: function(xhr, ajaxOptions, thrownError){ console.log(xhr, ajaxOptions, thrownError); },
-        dataType: "json"
+      $canvas[0].toBlob(function (blob){
+        send_blob(blob);
       });
-
-      $("#myModal").modal("hide");
     }
+
+    function send_blob(blob){
+      var formData = new FormData();
+
+      formData.append('image', blob);
+      var type   = $image.prop('image-type');
+      formData.append('type', type);
+
+      $.ajax({
+        method: "POST",
+        url: "#{image_upload_campaign_path(@campaign)}",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(data){ update_preview(data) },
+        error: function(xhr, ajaxOptions, thrownError){ console.log(xhr, ajaxOptions, thrownError); }
+      });
+    }
+
 
     function update_preview(json){
       console.log(json);
@@ -239,15 +306,6 @@
         remove_button.removeClass("hidden");
 
       }
-
-      // var id            = type + "-preview";
-      // var image_preview = $("#" + id + " img");
-      // var final_preview = $("#final-preview img");
-
-      // image_preview.prop('src', json.image_url);
-      // image_preview.prop('image_id', json.image_id);
-      
-      // final_preview.prop('src', json.full_strip);
     }
 
     $(".remove-image").on("click", function(e){

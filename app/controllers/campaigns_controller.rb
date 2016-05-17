@@ -84,16 +84,23 @@ class CampaignsController < ApplicationController
   def image_upload
     @campaign = Campaign.find(params[:id])
     type     = params[:type]
-    tmp = Tempfile.new("#{type}.png")
-    tmp.binmode
-    tmp.write Base64.decode64(params[:image]['data:image/png;base64,'.length .. -1])
-    tmp.rewind
-    file = ActionDispatch::Http::UploadedFile.new({
-          tempfile: tmp,
-          content_type: "image/png",
-          filename: "#{type}.png"
-        })
+    # tmp = Tempfile.new("#{type}.png")
+    # tmp.binmode
+    # tmp.write Base64.decode64(params[:image]['data:image/png;base64,'.length .. -1])
+    # tmp.rewind
+    # file = ActionDispatch::Http::UploadedFile.new({
+    #       tempfile: tmp,
+    #       content_type: "image/png",
+    #       filename: "#{type}.png"
+    #     })
     
+    file = params[:image]
+    file.original_filename = "#{type}.png"
+    # file = ActionDispatch::Http::UploadedFile.new({
+    #       tempfile: tmp_file.tempfile,
+    #       content_type: "image/png",
+    #       filename: "#{type}.png"
+    #     })
     # find current image for given type
     image = @campaign.images.find_by(image_type: Image.image_types[type]);
 
@@ -108,23 +115,7 @@ class CampaignsController < ApplicationController
     # generate the preview strip
     generate_preview_strip false
 
-    # json_response = @campaign.images.inject({}) do |hash, image|
-    #   hash["#{image.image_type}"] = {
-    #     "#{image.image_type}_url": "#{image.file.url}?#{image.updated_at.to_i}",
-    #     "#{image.image_type}_id": image.id
-    #   }
-    #   # hash["#{image.image_type}_url"] = "#{image.file.url}?#{image.updated_at.to_i}"
-    #   # hash["#{image.image_type}_id"]  = image.id
-    #   hash
-    # end
-
     return render json: json_response
-
-    # return render json: {
-    #   image_id: image.id,
-    #   image_url: "#{image.file.url}?#{image.updated_at.to_i}",
-    #   full_strip: "#{@campaign.images.full.first.file.url}?#{@campaign.images.full.first.updated_at}"
-    # }
   end
 
   def change_stamps
