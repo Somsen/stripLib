@@ -186,8 +186,8 @@ class CampaignsController < ApplicationController
   def json_response
     json = @campaign.images.inject({}) do |hash, image|
       hash["#{image.image_type}"] = {
-        "#{image.image_type}_url": "#{image.file.url}?#{image.updated_at.to_i}",
-        "#{image.image_type}_id": image.id
+        url: "#{image.file.url}?#{image.updated_at.to_i}",
+        id: image.id
       }
       # hash["#{image.image_type}_url"] = "#{image.file.url}?#{image.updated_at.to_i}"
       # hash["#{image.image_type}_id"]  = image.id

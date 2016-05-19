@@ -295,8 +295,8 @@
     function update_preview(json){
       console.log(json);
       for(var key in json){
-        var id  = json[key][key+"_id"];
-        var url = json[key][key+"_url"];
+        var id  = json[key]["id"];
+        var url = json[key]["url"];
 
         var image_preview = $("#" + key + "_id img");
         image_preview.prop('src', url);
